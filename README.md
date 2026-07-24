@@ -1,7 +1,7 @@
 [README.md](https://github.com/user-attachments/files/30334744/README.md)
 # PRFS2.0
 
-T동 C4D 렌더팜 구축 프로젝트
+영상애니메이션 촬영스튜디오 T동 C4D 렌더팜 구축 프로젝트
 # 🎬 PRFS 2.0 — T동 C4D 전용 렌더팜 구축 프로젝트
 
 > Phoenix Render Farm System 2.0  
@@ -11,7 +11,7 @@ T동 C4D 렌더팜 구축 프로젝트
 
 ## 📌 프로젝트 개요
 
-홍익대학교 영상애니메이션학부 T동(T104호) 실습실 PC 6대와 서버 PC 1대를 활용하여  
+홍익대학교 영상애니메이션 촬영스튜디오(T104호) 실습실 PC 6대와 서버 PC 1대를 활용하여  
 **Cinema 4D(C4D) 전용 독립 렌더팜**을 구축하는 졸업작품 프로젝트입니다.
 
 기존 M동(PRFS 1.0, 강세영 선배 구축)의 Maya/Blender 렌더팜과는 완전히 별개로 운영되며,  
