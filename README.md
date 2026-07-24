@@ -1,8 +1,8 @@
 [README.md](https://github.com/user-attachments/files/30334744/README.md)
 # PRFS2.0
 
-영상애니메이션 촬영스튜디오 T동 C4D 렌더팜 구축 프로젝트
-# 🎬 PRFS 2.0 — T동 C4D 전용 렌더팜 구축 프로젝트
+영상애니메이션 촬영스튜디오 C4D 렌더팜 구축 프로젝트
+# 🎬 PRFS 2.0 — 영상애니메이션 촬영스튜디오 C4D 전용 렌더팜 구축 프로젝트
 
 > Phoenix Render Farm System 2.0  
 > 홍익대학교 영상애니메이션학부 졸업작품 프로젝트
