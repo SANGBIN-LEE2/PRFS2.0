@@ -12,6 +12,8 @@ Maya → Deadline → Worker → NAS 전 구간이 동작하기까지 해결한 
 | #015 | OCIO 토큰 미치환 | 플러그인이 제출 값을 그대로 주입 | ✅ 해결 |
 | #016 | 외부 씬의 깨진 OCIO 경로 | 작업 PC 설치본 손상 | ✅ 해결 |
 | #017 | GPU 부족으로 부분 실패 | VRAM 점유 — Arnold는 CPU 폴백 없음 | ✅ 해결 |
+| #018 | 블렌더 렌더 크래시 (code 11) | Worker 블렌더 버전이 씬보다 낮음 | ⏳ 설치 대기 |
+| #019 | Worker Repository 연결 오류 | 오래된 인증서 경로·자격증명 충돌 | ⏳ 진행 중 |
 
 ---
 
@@ -148,3 +150,95 @@ WARNING | [texturesys] unable to load an image from the path: "D:/..."
 - `playbackOptions`의 프레임 범위
 
 제출 전 자동 검증 도구로 발전시킬 여지가 있다.
+
+---
+
+## #018 — 블렌더 Worker 버전 불일치로 크래시
+
+졸준위가 제공한 `.blend`(878MB)로 첫 블렌더 테스트를 했을 때 `Renderer returned non-zero error code, 11` 로 크래시했다. 원인은 로그 두 줄로 확정됐다.
+
+```
+Executable: "C:\Program Files\blender-4.5.3-windows-x64\...\blender.exe"
+Warning: File written by newer Blender binary (502.45), expect loss of data!
+```
+
+Deadline Blender 플러그인이 **4.5.3**을 가리키는데 씬은 **5.2**로 저장된 것이다. 블렌더는 상위 호환이 되지 않는다.
+
+### Worker별 버전이 제각각이었다
+
+| Worker | 설치 버전 |
+| --- | --- |
+| M211-18 | 5.2.2 LTS |
+| M211-11 | 4.5.3 |
+
+Deadline Blender 플러그인의 `Blender Executable` 필드는 **줄바꿈으로 구분된 목록**을 받고, 존재하는 첫 경로를 사용한다. 5.2 경로를 목록 맨 위에 미리 넣어두면 설치 완료 시점에 자동으로 전환된다.
+
+### 블렌더 경로 표기
+
+**블렌더에서 `//` 는 UNC가 아니라 `.blend` 파일 기준 상대경로다.**
+
+```
+마야     //223.194.101.83/2026_renderfarm/...     ✅
+블렌더   \\223.194.101.83\2026_renderfarm\...     ✅
+블렌더   //223.194.101.83/...                     ❌  엉뚱한 곳에 저장됨
+```
+
+마야에서 쓰던 형식을 그대로 붙여넣는 실수가 흔하므로 학생 매뉴얼에 명시했다.
+
+### 기타
+
+- 제출 시 `Submit Blender Scene File With The Job` 은 체크하지 않는다 — 878MB 씬이 Repository에 복사되어 볼륨을 채운다
+- 버전 외의 파이프라인은 전부 정상이었다: NAS UNC에서 씬 읽기, 출력 경로 전달, 오브젝트 동기화, 텍스처 누락 경고 없음
+
+---
+
+## #019 — Worker 복구: Repository 연결 오류
+
+장기간 꺼져 있던 Worker를 되살릴 때 반복해서 나온 오류다.
+
+```
+The Monitor was unable to connect to the specified Repository
+(\\223.194.101.83\deadline_repo)
+```
+
+### 진행 경과 (M211-13)
+
+| 단계 | 증상 | 조치 |
+| --- | --- | --- |
+| 1 | 인증서 경로가 `Z:/certs/Deadline10Client.pfx` — 존재하지 않는 매핑 드라이브 | 인증서 설정 해제 |
+| 2 | 공유 접근 불가 | 탐색기에서 NAS 자격증명 입력 |
+| 3 | "동일한 사용자가 둘 이상의 사용자 이름으로 다중 연결할 수 없습니다" | `net use * /delete /y` |
+| 4 | DB 호스트는 도달(`Test-NetConnection 223.194.103.39 -Port 27100` True)하나 `MongoDBServerSetup`에서 `System.NullReferenceException` | 클라이언트 재설치 |
+
+### 재설치 시 주의
+
+**NAS에서 설치 파일을 직접 실행하면 실패한다.**
+
+```
+Error copying file from packed archive //223.194.101.83/deadline_repo/...
+to C:/Program Files/Thinkbox/Deadline10/bin/deadlinemonitor.dll
+```
+
+설치 파일을 로컬(`C:\`)로 복사한 뒤 관리자 권한으로 실행해야 한다. 기존 Deadline 프로세스(`deadlinemonitor` / `deadlineworker` / `deadlinelauncher`)도 미리 종료한다.
+
+설치 옵션:
+
+| 항목 | 값 |
+| --- | --- |
+| Installation Type | Client |
+| Connection | Direct Connection |
+| Repository Path | `\\223.194.101.83\deadline_repo` |
+| Remote control / Auto upgrade | Use the Repository settings |
+
+### 미해결 — 클라이언트 인증서 사용 여부
+
+상반된 증거가 있다.
+
+| 출처 | 내용 |
+| --- | --- |
+| M211-18의 `deadline.ini` | `DbSSLCertificate=` (빈 값) — 인증서 없이 동작 중 |
+| PRFS 1.0 문서 (2025) | 같은 오류의 해법으로 `Deadline requires Client Certification` 체크 후 `\\223.194.101.83\deadline_repo\certs\Deadline10Client.pfx` 지정 |
+
+2026년 9월 서버 재구축(RCS 전환) 때 인증서가 제거됐을 가능성이 있다.
+
+**판별법** — `\\223.194.101.83\deadline_repo\certs\` 폴더와 `.pfx` 파일의 현존 여부를 확인한다. 있으면 인증서 방식, 없으면 M211-18 방식이 맞다.

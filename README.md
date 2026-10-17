@@ -16,10 +16,11 @@
 | --- | --- |
 | 분산 렌더 | 10프레임 → Worker 10대 자동 배분, NAS 출력 성공 |
 | 외부 프로덕션 씬 | 폴리곤 50만 / 조명 4개 샷 렌더 성공 |
-| 예약 시스템 | Google Sheets + GAS — 졸업준비위원회 인계 완료 |
-| 문서 | 학생용 4p 가이드 + 운영매뉴얼 29p |
+| 블렌더 | ⏳ Worker 버전 불일치 — 5.2 일괄 설치 대기 |
+| 예약 시스템 | 신청·예약 시트 재설계 (분량 기준 차등 배정) |
+| 문서 | 학생 가이드 10장 + 운영매뉴얼 + 졸준위 인계문서 |
 
-다음 단계는 학생 배포와 시범 운영이다.
+다음 단계는 **Worker 그룹(Pool) 생성과 학생 배포**다.
 
 ---
 
@@ -63,8 +64,11 @@ T동 실습실에 C4D 전용 독립 렌더팜을 구축하는 작업. 서버 PC 
 PRFS2.0/
 ├── docs/
 │   ├── m211/
-│   │   ├── operations-manual.md        M211 운영 매뉴얼 (본문)
-│   │   └── nas-structure.md            NAS 디렉토리 설계
+│   │   ├── operations-manual.md        M211 운영 매뉴얼 (관리자용)
+│   │   ├── operations-model.md         타임블럭·그룹·라이선스 설계
+│   │   ├── handover-committee.md       졸업준비위원회 인계 문서
+│   │   ├── nas-structure.md            NAS 디렉토리 설계
+│   │   └── student-guide/              학생용 가이드 10장 + 스크린샷
 │   ├── troubleshooting/
 │   │   └── 2026-10_m211-render-pipeline.md
 │   ├── pdf/                            배포용 PDF
@@ -82,8 +86,10 @@ PRFS2.0/
 │   └── set_arnold_license_maya.bat
 │
 ├── reservation/
-│   ├── m211_booking.gs                 M211 예약 시스템 (현행)
-│   ├── m211_booking_template.xlsx      예약 시트 템플릿
+│   ├── M211_렌더팜_신청_예약시트.xlsx   신청·예약·사용현황 (현행)
+│   ├── build_booking_sheet.py          위 시트 생성 스크립트
+│   ├── m211_booking.gs                 예약 시트 Apps Script
+│   ├── m211_booking_template.xlsx      이전 템플릿
 │   └── reservation_system.gs           초기 버전
 │
 ├── nas-template/
@@ -115,6 +121,8 @@ Repository를 재설치하거나 복원하면 아래 두 가지가 사라진다.
 | Arnold 라이선스 인증 실패 | 2026 전용 feature만 발급됨 | 전 버전 Maya 2026으로 통일 |
 | 일부 프레임만 실패 | Worker VRAM 부족 — CPU 폴백 없음 | Render Device를 CPU로 고정 |
 | 받은 씬이 회색으로 렌더됨 | 텍스처·레퍼런스 경로 유실 | Archive Scene으로 주고받기 |
+| 블렌더 렌더가 크래시 | Worker 블렌더가 씬보다 구버전 | 전 PC 5.2 통일 (대기 중) |
+| Worker Repository 연결 실패 | 오래된 인증서 경로·자격증명 충돌 | 클라이언트 재설치 (로컬 복사 후) |
 | T동↔M동 연결 실패 | 4433 포트 방화벽 차단 | T동 독립 렌더팜으로 전환 |
 | MongoDB 외부 접근 불가 | `bindIp: 127.0.0.1` | `bindIp: 0.0.0.0` |
 
@@ -133,6 +141,7 @@ Repository를 재설치하거나 복원하면 아래 두 가지가 사라진다.
 | 2026.09 | 서버 재구축, RCS 전환, 최소 테스트 렌더 성공 |
 | 2026.10 | **M211 NAS 구조 구축, 예약 시스템 인계, 매뉴얼 작성** |
 | 2026.10.17 | **Maya→Deadline→NAS 전구간 검증 — 테스트 렌더 성공** |
+| 2026.10.17 | 학생 가이드 전면 재작성, 신청·예약 체계 설계, 졸준위 인계 문서 작성 |
 
 ---
 
