@@ -10,7 +10,9 @@
 
 ## 📌 현재 상태 (2026.10.17)
 
-**M211 Maya/Arnold 렌더팜이 동작한다.** Maya → Deadline → Worker 20대 → NAS 출력의 전 구간이 검증됐다.
+**M211 Maya/Arnold 렌더팜이 동작한다.** Maya → Deadline → Worker → NAS 출력의 전 구간이 검증됐다.
+
+2026.10.17 기준 **18대 가동** (M211-08 전원 불량, M211-12 수리 중).
 
 | 검증 항목 | 결과 |
 | --- | --- |
@@ -37,7 +39,7 @@ M211-00                     라이선스 서버
 ├── Autodesk FlexLM         포트 27000 — Arnold
 └── Foundry RLM             포트 5053 — Nuke
 
-M211-01 ~ M211-19           Worker (20대)
+M211-01 ~ M211-19           Worker (19대 중 17대 가동)
 ├── Deadline Worker
 ├── Maya 2026 + MtoA 5.5.3
 └── Blender
