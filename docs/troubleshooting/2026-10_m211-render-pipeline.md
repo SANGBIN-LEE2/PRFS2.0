@@ -242,3 +242,137 @@ to C:/Program Files/Thinkbox/Deadline10/bin/deadlinemonitor.dll
 2026년 9월 서버 재구축(RCS 전환) 때 인증서가 제거됐을 가능성이 있다.
 
 **판별법** — `\\223.194.101.83\deadline_repo\certs\` 폴더와 `.pfx` 파일의 현존 여부를 확인한다. 있으면 인증서 방식, 없으면 M211-18 방식이 맞다.
+
+---
+
+## #020 — 출력 경로가 두 번 이어 붙는다
+
+첫 실사용 테스트에서 결과물이 폴더 안으로 끝없이 파고들었다.
+
+```
+output/C393169/20261019_testfinal/beauty/223.194.101.83/2026_renderfarm/
+  output/C393169/20261017_baekdawon_test/bd.0002.png
+```
+
+로그의 실제 기록:
+
+```
+[driver_png] writing file
+//...20261019_testfinal/beauty///223.194.101.83/...20261017_old/bd.0002.png
+└──── 제출 창 Output Path ────┘ └AOV┘ └──── 씬의 File name prefix ────┘
+```
+
+### 원인
+
+Deadline Maya 제출 창의 `Output Path` 와 씬의 `File name prefix` **양쪽에 절대경로가 들어가 있었다.** MayaBatch 플러그인이 두 값을 그대로 이어 붙인다. AOV가 켜져 있으면 그 사이에 패스 이름이 한 번 더 끼어든다.
+
+처음에는 "prefix 칸의 기존 내용을 지우지 않고 붙여넣어서"로 오진했다. 제출 창을 스크롤해서 `Output Path` 칸을 확인한 뒤에야 원인이 잡혔다. **제출 창의 모든 칸을 보지 않고 추론한 것이 오진의 원인이다.**
+
+### 결론
+
+절대경로는 한 군데에만 넣는다.
+
+| 칸 | 위치 | 값 |
+| --- | --- | --- |
+| `Output Path` | 제출 창 | 폴더 경로 |
+| `File name prefix` | Render Settings → Common | 파일 이름만 (`shot01`) |
+
+검증은 Render Settings의 `File name:` 줄로 한다. 경로 없이 `shot01.0001.png` 로 보이면 정상이고, AOV가 켜져 있으면 `<RenderPass>/shot01.0001.png` 로 보인다.
+
+---
+
+## #021 — AOV 폴더는 정상 동작이다
+
+같은 테스트에서 `beauty` / `background` / `ID` / `AA_inv_density` / `N` 폴더가 동시에 생겼다. 오류로 오인했으나 씬에 AOV가 켜져 있어서 Arnold가 패스마다 폴더를 나눈 것이다.
+
+```
+[aov] done preparing 7 AOVs for 6 outputs to 4 drivers
+```
+
+`beauty` 가 최종 이미지다. 합성에 쓰는 출력이므로 **렌더팜 쪽에서 끄도록 안내하지 않는다.** 단, 일부 패스는 PNG로 저장되지 않는다.
+
+```
+[aov] driver "defaultArnoldDriver/driver_png.N" does not support VECTOR pixels
+```
+
+패스를 쓰는 씬은 Image format을 `exr` 로 둬야 한다.
+
+---
+
+## #022 — Deadline 셸프가 PC마다 다르다
+
+같은 실습실인데 마야 셸프에 `Deadline` 탭이 있는 PC와 없는 PC가 섞여 있다. 클라이언트 설치 시 통합 플러그인(Integrated Submitter) 선택 여부가 PC마다 달랐던 것으로 보인다.
+
+셸프가 없어도 **Deadline Monitor → Submit → 3D → Maya** 로 제출할 수 있고 결과는 같다. 다만 Monitor 쪽 제출 창에는 `Camera` 칸이 없다(`Renderer Options` 탭에도 없다). 그 경로로 제출하면 씬의 `Renderable Camera` 가 그대로 쓰이므로 마야에서 미리 지정해야 한다.
+
+가이드는 Monitor 경로를 1순위로 바꿨다. 셸프는 "있으면 더 빠른 길"로 둔다.
+
+재설치 시 Integrated Submitter에서 Maya를 체크하면 셸프가 생긴다. 설치 경로는 `C:\Program Files\Thinkbox\Deadline10` 이며, Repository 경로와 혼동하지 않도록 주의한다.
+
+---
+
+## #023 — Strict Error Checking이 무해한 경고로 작업을 중단시킨다
+
+외부 프로덕션 씬(`OverTheWall`)을 올려 테스트하자 렌더가 시작되지도 못하고 Failed 처리됐다.
+
+```
+Error: Strict error checking on, caught the following error or warning.
+Warning: file: ... line 41: Error reading file. : //.../dam_re_Rigging_master.ma
+```
+
+로그에는 아래 두 줄이 수백 번 반복됐다.
+
+```
+Error: ... The transform 'FK_spine_1_ctl' has no '.oclr' attribute.
+Error: ... setAttr: No object matches name: .oclr
+```
+
+`.oclr` 은 리그 컨트롤러의 표시 색상 속성이다. 구버전 마야에서 제작된 리그를 2026에서 읽을 때 발생하며 **렌더 결과에 영향이 없다.** 그러나 `Strict Error Checking` 이 켜져 있으면 Deadline이 문자열만 보고 작업을 중단한다.
+
+### 운영상 의미
+
+이 렌더팜은 졸업작품 프로덕션 씬을 받는다. 선배에게 물려받거나 외주로 받은 구버전 리그가 섞여 있어 **이 경고는 상시 발생한다.** 학생마다 체크를 해제하라고 안내하는 것보다 기본값을 꺼두는 편이 운영 부담이 적다.
+
+제출 창은 마지막 사용 설정을 기억하므로, PC별로 한 번 해제해두면 유지된다.
+
+### 부수 효과
+
+중단되면 Arnold가 실행되지 않으므로 **텍스처 해결 여부를 확인할 수 없다.** 실제로 이 단계에서 "텍스처가 회색"이라는 별개 증상을 진단하려 했으나, 로그 1561줄에 텍스처 관련 기록이 한 줄도 없었다. 렌더까지 도달하지 못한 작업의 로그로는 아무것도 판정할 수 없다.
+
+---
+
+## #024 — 프레임 범위는 1001부터 시작한다
+
+프로덕션 씬의 프레임 범위가 `1001~1041` 인데 `Frame List` 에 `1-3` 을 넣어 제출했다. 렌더는 성공했고 파일 수도 맞았으나 애니메이션이 시작되기 전 구간이라 내용이 달랐다.
+
+졸업작품 씬은 대부분 1001번부터 시작한다. 가이드가 "처음엔 1-3"으로만 안내하고 있어 **전수 오류가 예상되는 지점**이었다.
+
+### Frame List 문법
+
+| 표기 | 결과 |
+| --- | --- |
+| `1001-1041` | 전 구간 |
+| `1001-1041x5` | 5프레임 간격 |
+| `1001,1006,1011` | 열거 |
+
+마야 `Render Settings → Frame Range → By frame` 값은 Deadline이 읽지 않는다. Deadline은 Frame List의 프레임을 개별 태스크로 분배하므로 **간격은 Frame List에 `x` 로 명시해야 한다.** 이를 모르면 9장을 의도하고 41장을 렌더하게 되어 라이선스 블럭이 과소비된다.
+
+---
+
+## #025 — 작업 순서: 업로드가 먼저다
+
+가이드의 `00 · 5분 요약` 이 "파일 준비 → NAS 업로드" 순서로 적혀 있었다. **순서가 반대다.** 텍스처 경로를 NAS로 Repath 하려면 텍스처가 이미 NAS에 있어야 한다.
+
+또한 업로드 후에는 **NAS에 올린 씬을 열어 수정하고 거기에 저장**해야 한다. 로컬 사본을 수정하면 NAS 쪽은 그대로이며, 두 벌이 생겨 어느 것이 최신인지 추적이 어려워진다.
+
+확정한 순서:
+
+```
+1  이름 정리 (한글·공백·점 제거)   ← 업로드 전
+2  NAS input 업로드
+3  NAS output 폴더 생성
+4  NAS의 씬을 열기
+5  Set Project → 레퍼런스 Import → File Path Editor → CPU → prefix
+6  Ctrl+S (NAS의 씬에 저장)
+7  제출
+```
