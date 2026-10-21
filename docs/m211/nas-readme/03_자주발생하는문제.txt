@@ -44,7 +44,7 @@
   이렇게 보입니다.
 
     writing file
-    //...output/C393169/20261103_final/beauty///223.194.101.83/...
+    //...C393169/output/20261103_final/beauty///223.194.101.83/...
 
   원인 : 제출 창의 Output Path 와
          Render Settings 의 File name prefix 에

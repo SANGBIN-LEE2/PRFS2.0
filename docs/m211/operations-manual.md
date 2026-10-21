@@ -901,7 +901,7 @@ C:\ProgramData\Thinkbox\Deadline10\workers\<Worker명>\plugins\<JobID>\MayaBatch
 [3] 1% done … 100% done
         → 실제로 렌더되고 있다는 유일한 증거
 
-[4] [driver_png] writing file '//223.194.101.83/2026_renderfarm/output/...'
+[4] [driver_png] writing file '//223.194.101.83/2026_renderfarm/...'/output
         → NAS에 기록됨
 ```
 

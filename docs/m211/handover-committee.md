@@ -152,7 +152,7 @@ M211 렌더팜(Maya / Arnold / Blender)이 동작 검증을 마쳤습니다. 이
 | 항목 | 작년 (PRFS 1.0) | 올해 |
 | --- | --- | --- |
 | **마야 컬러 매니지먼트** | 학생이 스크립트를 직접 실행 | **서버에서 처리 — 학생은 아무것도 안 해도 됨** |
-| **업로드 경로** | `deadline_repo\renderfarm\학번\input` | `2026_renderfarm\input\학번` |
+| **업로드 경로** | `deadline_repo\renderfarm\학번\input` | `2026_renderfarm\학번\input` |
 | **마야 버전** | — | **2026 고정** (Arnold 라이선스가 2026 전용) |
 | **Render Device** | — | **CPU 고정** (GPU는 일부 프레임이 조용히 실패) |
 
